@@ -360,8 +360,8 @@ void VehicleMagnetometer::UpdatePowerCompensation()
 			actuator_controls_s controls;
 
 			if (_actuator_controls_0_sub.update(&controls)) {
-				for (auto &cal : _calibration) {
-					cal.UpdatePower(controls.control[actuator_controls_s::INDEX_THROTTLE]);
+				for (int i = 0; i < MAX_SENSOR_COUNT; i++) {
+					_calibration[i].UpdatePower(controls.control[actuator_controls_s::INDEX_THROTTLE]);
 				}
 			}
 
@@ -373,14 +373,14 @@ void VehicleMagnetometer::UpdatePowerCompensation()
 			if (_battery_status_sub.update(&bat_stat)) {
 				float power = bat_stat.current_a * 0.001f; // current in [kA]
 
-				for (auto &cal : _calibration) {
-					cal.UpdatePower(power);
+				for (int i = 0; i < MAX_SENSOR_COUNT; i++) {
+					_calibration[i].UpdatePower(power);
 				}
 			}
 
 		} else {
-			for (auto &cal : _calibration) {
-				cal.UpdatePower(0.f);
+			for (int i = 0; i < MAX_SENSOR_COUNT; i++) {
+				_calibration[i].UpdatePower(0.f);
 			}
 		}
 	}
@@ -401,6 +401,10 @@ void VehicleMagnetometer::Run()
 		if (_vehicle_control_mode_sub.copy(&vehicle_control_mode)) {
 			_armed = vehicle_control_mode.flag_armed;
 		}
+	}
+
+	for (int i = 0; i < MAX_SENSOR_COUNT; i++) {
+		_calibration[i].SensorCorrectionsUpdate();
 	}
 
 	UpdatePowerCompensation();

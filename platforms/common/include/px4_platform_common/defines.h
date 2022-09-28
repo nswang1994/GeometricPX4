@@ -52,6 +52,8 @@
 #ifdef __cplusplus
 static inline constexpr bool PX4_ISFINITE(float x) { return __builtin_isfinite(x); }
 static inline constexpr bool PX4_ISFINITE(double x) { return __builtin_isfinite(x); }
+static inline constexpr bool PX4_ISNAN(float x) { return __builtin_isnan(x); }
+static inline constexpr bool PX4_ISNAN(double x) { return __builtin_isnan(x); }
 #else
 #define PX4_ISFINITE(x) __builtin_isfinite(x)
 #endif /* __cplusplus */
