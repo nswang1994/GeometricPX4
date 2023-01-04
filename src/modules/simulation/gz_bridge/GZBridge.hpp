@@ -54,11 +54,11 @@
 #include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/vehicle_local_position.h>
 
-#include <ignition/msgs.hh>
-#include <ignition/transport.hh>
-#include <ignition/math.hh>
-#include <ignition/msgs/imu.pb.h>
-#include <ignition/msgs/fluid_pressure.pb.h>
+#include <gz/msgs.hh>
+#include <gz/transport.hh>
+#include <gz/math.hh>
+#include <gz/msgs/imu.pb.h>
+#include <gz/msgs/fluid_pressure.pb.h>
 
 using namespace time_literals;
 
@@ -101,11 +101,11 @@ private:
 
 	bool updateClock(const uint64_t tv_sec, const uint64_t tv_nsec);
 
-	void clockCallback(const ignition::msgs::Clock &clock);
-	void imuCallback(const ignition::msgs::IMU &imu);
-	void airpressureCallback(const ignition::msgs::FluidPressure &air_pressure);
-	void poseInfoCallback(const ignition::msgs::Pose_V &pose);
-	void motorSpeedCallback(const ignition::msgs::Actuators &actuators);
+	void clockCallback(const gz::msgs::Clock &clock);
+	void imuCallback(const gz::msgs::IMU &imu);
+	void airpressureCallback(const gz::msgs::FluidPressure &air_pressure);
+	void poseInfoCallback(const gz::msgs::Pose_V &pose);
+	void motorSpeedCallback(const gz::msgs::Actuators &actuators);
 
 	// Subscriptions
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
@@ -138,8 +138,8 @@ private:
 
 	MixingOutput _mixing_output{"SIM_GZ", 8, *this, MixingOutput::SchedulingPolicy::Auto, false, false};
 
-	ignition::transport::Node _node;
-	ignition::transport::Node::Publisher _actuators_pub;
+	gz::transport::Node _node;
+	gz::transport::Node::Publisher _actuators_pub;
 
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::SIM_GZ_HOME_LAT>) _param_sim_home_lat,

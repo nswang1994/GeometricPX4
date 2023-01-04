@@ -7,6 +7,10 @@
 
 . ${R}etc/init.d/rc.vtol_defaults
 
+PX4_SIMULATOR=${PX4_SIMULATOR:=gz}
+PX4_GZ_WORLD=${PX4_GZ_WORLD:=default}
+PX4_SIM_MODEL=${PX4_SIM_MODEL:=standard_vtol}
+
 # TODO: Enable motor failure detection when the
 # VTOL no longer reports 0A for all ESCs in SITL
 param set-default FD_ACT_EN 0
@@ -30,6 +34,38 @@ param set-default CA_ROTOR3_KM -0.05
 param set-default CA_ROTOR4_AX 1.0
 param set-default CA_ROTOR4_AZ 0.0
 param set-default CA_ROTOR4_PX 0.2
+
+param set-default SIM_GZ_FUNC1 101
+param set-default SIM_GZ_FUNC2 102
+param set-default SIM_GZ_FUNC3 103
+param set-default SIM_GZ_FUNC4 104
+param set-default SIM_GZ_FUNC5 105
+param set-default SIM_GZ_FUNC6 201
+param set-default SIM_GZ_FUNC7 202
+param set-default SIM_GZ_FUNC8 203
+
+param set-default COM_RC_IN_MODE 1
+param set-default ASPD_PRIMARY 1
+param set-default FW_ARSP_MODE 0
+param set-default CBRK_AIRSPD_CHK 162128
+
+# param set-default SIM_GZ_MIN1 150
+# param set-default SIM_GZ_MIN2 150
+# param set-default SIM_GZ_MIN3 150
+# param set-default SIM_GZ_MIN4 150
+# param set-default SIM_GZ_MIN5 150
+# param set-default SIM_GZ_MIN6 150
+# param set-default SIM_GZ_MIN7 150
+# param set-default SIM_GZ_MIN8 150
+#
+# param set-default SIM_GZ_MAX1 1500
+# param set-default SIM_GZ_MAX2 1500
+# param set-default SIM_GZ_MAX3 1500
+# param set-default SIM_GZ_MAX4 1500
+# param set-default SIM_GZ_MAX5 1500
+# param set-default SIM_GZ_MAX6 1500
+# param set-default SIM_GZ_MAX7 1500
+# param set-default SIM_GZ_MAX8 1500
 
 param set-default CA_SV_CS_COUNT 3
 param set-default CA_SV_CS0_TYPE 1
