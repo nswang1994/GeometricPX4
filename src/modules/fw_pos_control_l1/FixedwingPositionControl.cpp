@@ -1502,7 +1502,7 @@ FixedwingPositionControl::control_auto_takeoff(const hrt_abstime &now, const flo
 		_att_sp.thrust_body[0] = _runway_takeoff.getThrottle(_param_fw_thr_idle.get(), get_tecs_thrust());
 
 		// apply flaps for takeoff according to the corresponding scale factor set via FW_FLAPS_TO_SCL
-		_spoilers_setpoint_with_slewrate.update(_param_fw_flaps_to_scl.get(), control_interval);
+		_flaps_setpoint_with_slewrate.update(_param_fw_flaps_to_scl.get(), control_interval);
 		_spoilers_setpoint_with_slewrate.update(0.f, control_interval);
 
 		// retract ladning gear once passed the climbout state
