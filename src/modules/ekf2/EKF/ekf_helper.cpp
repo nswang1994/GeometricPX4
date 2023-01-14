@@ -306,29 +306,6 @@ bool Ekf::resetMagHeading()
 	return false;
 }
 
-// Return the magnetic declination in radians to be used by the alignment and fusion processing
-float Ekf::getMagDeclination()
-{
-	// set source of magnetic declination for internal use
-	if (_control_status.flags.mag_aligned_in_flight) {
-		// Use value consistent with earth field state
-		return atan2f(_state.mag_I(1), _state.mag_I(0));
-
-	} else if (_params.mag_declination_source & GeoDeclinationMask::USE_GEO_DECL) {
-		// use parameter value until GPS is available, then use value returned by geo library
-		if (_NED_origin_initialised || PX4_ISFINITE(_mag_declination_gps)) {
-			return _mag_declination_gps;
-
-		} else {
-			return math::radians(_params.mag_declination_deg);
-		}
-
-	} else {
-		// always use the parameter value
-		return math::radians(_params.mag_declination_deg);
-	}
-}
-
 void Ekf::constrainStates()
 {
 	_state.quat_nominal = matrix::constrain(_state.quat_nominal, -1.0f, 1.0f);
@@ -1065,63 +1042,6 @@ void Ekf::initialiseQuatCovariances(Vector3f &rot_vec_var)
 	}
 }
 
-void Ekf::stopMagFusion()
-{
-	if (_control_status.flags.mag_hdg || _control_status.flags.mag_3D) {
-		ECL_INFO("stopping all mag fusion");
-		stopMag3DFusion();
-		stopMagHdgFusion();
-		clearMagCov();
-	}
-}
-
-void Ekf::stopMag3DFusion()
-{
-	// save covariance data for re-use if currently doing 3-axis fusion
-	if (_control_status.flags.mag_3D) {
-		saveMagCovData();
-
-		_control_status.flags.mag_3D = false;
-		_control_status.flags.mag_dec = false;
-
-		_fault_status.flags.bad_mag_x = false;
-		_fault_status.flags.bad_mag_y = false;
-		_fault_status.flags.bad_mag_z = false;
-
-		_fault_status.flags.bad_mag_decl = false;
-	}
-}
-
-void Ekf::stopMagHdgFusion()
-{
-	if (_control_status.flags.mag_hdg) {
-		_control_status.flags.mag_hdg = false;
-
-		_fault_status.flags.bad_hdg = false;
-	}
-}
-
-void Ekf::startMagHdgFusion()
-{
-	if (!_control_status.flags.mag_hdg) {
-		stopMag3DFusion();
-		ECL_INFO("starting mag heading fusion");
-		_control_status.flags.mag_hdg = true;
-	}
-}
-
-void Ekf::startMag3DFusion()
-{
-	if (!_control_status.flags.mag_3D) {
-
-		stopMagHdgFusion();
-
-		zeroMagCov();
-		loadMagCovData();
-		_control_status.flags.mag_3D = true;
-	}
-}
-
 void Ekf::updateGroundEffect()
 {
 	if (_control_status.flags.in_air && !_control_status.flags.fixed_wing) {
@@ -1184,35 +1104,6 @@ void Ekf::increaseQuatYawErrVariance(float yaw_variance)
 	P(3,2) -= yaw_variance*SQ[0]*SQ[3];
 }
 
-// save covariance data for re-use when auto-switching between heading and 3-axis fusion
-void Ekf::saveMagCovData()
-{
-	// save variances for XYZ body axis field
-	_saved_mag_bf_variance(0) = P(19, 19);
-	_saved_mag_bf_variance(1) = P(20, 20);
-	_saved_mag_bf_variance(2) = P(21, 21);
-
-	// save the NE axis covariance sub-matrix
-	_saved_mag_ef_ne_covmat = P.slice<2, 2>(16, 16);
-
-	// save variance for the D earth axis
-	_saved_mag_ef_d_variance = P(18, 18);
-}
-
-void Ekf::loadMagCovData()
-{
-	// re-instate variances for the XYZ body axis field
-	P(19, 19) = _saved_mag_bf_variance(0);
-	P(20, 20) = _saved_mag_bf_variance(1);
-	P(21, 21) = _saved_mag_bf_variance(2);
-
-	// re-instate the NE axis covariance sub-matrix
-	P.slice<2, 2>(16, 16) = _saved_mag_ef_ne_covmat;
-
-	// re-instate the D earth axis variance
-	P(18, 18) = _saved_mag_ef_d_variance;
-}
-
 void Ekf::startAirspeedFusion()
 {
 	// If starting wind state estimation, reset the wind states and covariances before fusing any data
@@ -1271,7 +1162,6 @@ void Ekf::startGpsYawFusion(const gpsSample &gps_sample)
 	if (!_control_status.flags.gps_yaw && resetYawToGps(gps_sample.yaw)) {
 		ECL_INFO("starting GPS yaw fusion");
 		_control_status.flags.yaw_align = true;
-		_control_status.flags.mag_dec = false;
 		stopEvYawFusion();
 		stopMagHdgFusion();
 		stopMag3DFusion();

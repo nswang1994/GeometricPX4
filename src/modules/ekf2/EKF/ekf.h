@@ -317,11 +317,11 @@ public:
 	const Vector3f &getMagBias() const { return _state.mag_B; }
 	Vector3f getMagBiasVariance() const
 	{
-		if (_control_status.flags.mag_3D) {
+		if (_control_status.flags.mag) {
 			return Vector3f{P(19, 19), P(20, 20), P(21, 21)};
 		}
 
-		return _saved_mag_bf_variance;
+		return _saved_mag_bf_covmat.diag();
 	}
 	float getMagBiasLimit() const { return 0.5f; } // 0.5 Gauss
 
@@ -611,9 +611,8 @@ private:
 	float _last_on_ground_posD{0.0f};	///< last vertical position when the in_air status was false (m)
 	uint64_t _flt_mag_align_start_time{0};	///< time that inflight magnetic field alignment started (uSec)
 	uint64_t _time_last_mov_3d_mag_suitable{0};	///< last system time that sufficient movement to use 3-axis magnetometer fusion was detected (uSec)
-	Vector3f _saved_mag_bf_variance {}; ///< magnetic field state variances that have been saved for use at the next initialisation (Gauss**2)
-	Matrix2f _saved_mag_ef_ne_covmat{}; ///< NE magnetic field state covariance sub-matrix saved for use at the next initialisation (Gauss**2)
-	float _saved_mag_ef_d_variance{};   ///< D magnetic field state variance saved for use at the next initialisation (Gauss**2)
+	Matrix3f _saved_mag_ef_covmat{}; ///< NED magnetic field state covariance sub-matrix saved for use at the next initialisation (Gauss**2)
+	Matrix3f _saved_mag_bf_covmat{}; ///< magnetic field state covariance sub-matrix that has been saved for use at the next initialisation (Gauss**2)
 
 	gps_check_fail_status_u _gps_check_fail_status{};
 
@@ -870,8 +869,6 @@ private:
 	void runOnGroundYawReset();
 	void runInAirYawReset();
 
-	void selectMagAuto();
-	void check3DMagFusionSuitability();
 	void checkYawAngleObservability();
 	void checkMagBiasObservability();
 	bool canUse3DMagFusion() const;
@@ -880,8 +877,6 @@ private:
 	bool shouldInhibitMag() const;
 	bool magFieldStrengthDisturbed(const Vector3f &mag) const;
 	static bool isMeasuredMatchingExpected(float measured, float expected, float gate);
-	void runMagAndMagDeclFusions(const Vector3f &mag);
-	void run3DMagAndDeclFusions(const Vector3f &mag);
 
 	// control fusion of air data observations
 	void controlAirDataFusion();
@@ -919,11 +914,14 @@ private:
 
 	bool isConditionalRangeAidSuitable();
 
-	void stopMagFusion();
-	void stopMag3DFusion();
-	void stopMagHdgFusion();
 	void startMagHdgFusion();
+	void stopMagHdgFusion();
+
+	void startMagFusion();
+	void stopMagFusion();
+
 	void startMag3DFusion();
+	void stopMag3DFusion();
 
 	void stopBaroHgtFusion();
 	void stopGpsHgtFusion();
@@ -964,8 +962,6 @@ private:
 	// load and save mag field state covariance data for re-use
 	void loadMagCovData();
 	void saveMagCovData();
-	void clearMagCov();
-	void zeroMagCov();
 
 	void resetZDeltaAngBiasCov();
 

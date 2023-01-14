@@ -1476,6 +1476,7 @@ void EKF2::PublishStatusFlags(const hrt_abstime &timestamp)
 		status_flags.cs_rng_kin_consistent      = _ekf.control_status_flags().rng_kin_consistent;
 		status_flags.cs_fake_pos                = _ekf.control_status_flags().fake_pos;
 		status_flags.cs_fake_hgt                = _ekf.control_status_flags().fake_hgt;
+		status_flags.cs_mag                     = _ekf.control_status_flags().mag;
 
 		status_flags.fault_status_changes     = _filter_fault_status_changes;
 		status_flags.fs_bad_mag_x             = _ekf.fault_status_flags().bad_mag_x;
@@ -2231,12 +2232,12 @@ void EKF2::UpdateGyroCalibration(const hrt_abstime &timestamp)
 
 void EKF2::UpdateMagCalibration(const hrt_abstime &timestamp)
 {
-	const bool bias_valid = (_ekf.control_status_flags().mag_hdg || _ekf.control_status_flags().mag_3D)
+	const bool bias_valid = (_ekf.control_status_flags().mag_hdg || _ekf.control_status_flags().mag)
 				&& _ekf.control_status_flags().mag_aligned_in_flight
 				&& !_ekf.control_status_flags().mag_fault
 				&& !_ekf.control_status_flags().mag_field_disturbed;
 
-	const bool learning_valid = bias_valid && _ekf.control_status_flags().mag_3D;
+	const bool learning_valid = bias_valid && _ekf.control_status_flags().mag;
 
 	UpdateCalibration(timestamp, _mag_cal, _ekf.getMagBias(), _ekf.getMagBiasVariance(), _ekf.getMagBiasLimit(),
 			  bias_valid, learning_valid);
