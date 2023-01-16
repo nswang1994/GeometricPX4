@@ -136,5 +136,9 @@
         "yaml.schemas": {
                 "${workspaceFolder}/validation/module_schema.yaml": "${workspaceFolder}/src/modules/*/module.yaml"
         },
-        "cortex-debug.openocdPath": "${env:PICO_SDK_PATH}/../openocd/src/openocd"       // Added for rp2040
+        "cortex-debug.openocdPath": "${env:PICO_SDK_PATH}/../openocd/src/openocd",
+        "ros.distro": "melodic",
+        "python.autoComplete.extraPaths": [
+                "/opt/ros/melodic/lib/python2.7/dist-packages"
+        ] // Added for rp2040
 }
