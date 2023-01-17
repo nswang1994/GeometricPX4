@@ -85,8 +85,8 @@ MulticopterRateControl::parameters_updated()
 		rate_k.emult(Vector3f(_param_mc_rollrate_d.get(), _param_mc_pitchrate_d.get(), _param_mc_yawrate_d.get())));
 
 
-	_rate_control.setGeoGains(	_param_mc_fftsadrc_k_a.get(),
-					_param_mc_fftsadrc_kappa_a.get());
+	_rate_control.setGeoGains(	 _param_mc_es_adrc_kp.get(),
+					 _param_mc_es_adrc_kd.get());
 
 	_rate_control.setIntegratorLimit(
 		Vector3f(_param_mc_rr_int_lim.get(), _param_mc_pr_int_lim.get(), _param_mc_yr_int_lim.get()));

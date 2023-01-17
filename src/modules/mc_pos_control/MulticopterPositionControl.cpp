@@ -167,7 +167,7 @@ void MulticopterPositionControl::parameters_update(bool force)
 			Vector3f(_param_mpc_xy_vel_i_acc.get(), _param_mpc_xy_vel_i_acc.get(), _param_mpc_z_vel_i_acc.get()),
 			Vector3f(_param_mpc_xy_vel_d_acc.get(), _param_mpc_xy_vel_d_acc.get(), _param_mpc_z_vel_d_acc.get()));
 
-		_control.setGeoGains(_param_mpc_ffts_kt.get(), _param_mpc_ffts_kappat.get());
+		//_control.setGeoGains(_param_mpc_es_kp.get(), _param_mpc_es_kd.get());
 		_control.setHorizontalThrustMargin(_param_mpc_thr_xy_marg.get());
 
 		// Check that the design parameters are inside the absolute maximum constraints

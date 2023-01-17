@@ -57,7 +57,7 @@ public:
 	 * @param D 3D vector of derivative gains
 	 */
 	void setGains(const matrix::Vector3f &P, const matrix::Vector3f &I, const matrix::Vector3f &D);
-	void setGeoGains(const float &kA_, const float &kappaA_);
+	void setGeoGains(const float & _kP, const float & _kD);
 
 	/**
 	 * Set the mximum absolute value of the integrator for all axes
@@ -111,8 +111,6 @@ private:
 	void AttitudeESO(matrix::Vector3f tau, float dt);
 	float takeoff_time;
 	bool ESOflag=1;
-	matrix::Vector3f phi1(matrix::Vector3f e1);
-	matrix::Vector3f phi2(matrix::Vector3f e1);
 
 	// Gains
 	matrix::Vector3f _gain_p; ///< rate control proportional gain for all axes x, y, z
@@ -139,12 +137,11 @@ private:
 	matrix::MatrixfSO3 L_{L};
 	matrix::MatrixfSO3 J_{J};
 	matrix::MatrixfSO3 Q;
-	float k_A;
-	float kappa_A;
+	float kP;
+	float kD;
 
 
 	//float kappa_A = 0.8f;
-	float _p = 1.2f;
 	// ESO
 
 	matrix::MatrixfSO3 R_hatnext;
@@ -159,10 +156,9 @@ private:
 
 
 	matrix::MatrixfSO3 R_;
-	float k_a1=6.0f;
-	float k_a2=4.0f;
-	float k_a3=3.0f;
-	float kappa_a=0.8f;
+	float k_a1=12.0f;
+	float k_a2=3.0f;
+	float kappa_a=1.2f;
 	//matrix::Vector3f Omega;
 	matrix::Vector3f OmegadPrev;
 };

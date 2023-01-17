@@ -189,8 +189,8 @@ private:
 
 	//ESO
 	void TranslationalESO(matrix::Vector3f phi,float dt);
-	matrix::Vector3f phi1(matrix::Vector3f e1);
-	matrix::Vector3f phi2(matrix::Vector3f e1);
+	//matrix::Vector3f phi1(matrix::Vector3f e1);
+	//matrix::Vector3f phi2(matrix::Vector3f e1);
 	// Gains
 	matrix::Vector3f _gain_pos_p; ///< Position control proportional gain
 	matrix::Vector3f _gain_vel_p; ///< Velocity control proportional gain
@@ -231,10 +231,9 @@ private:
 	matrix::MatrixfSO3 L_{L};
 
 	//float kpos = 3.0f;
-	float k_T;
+	float kP;
+	float kD;
 
-	float kappa_T;
-	float _p = 1.2f;
 
 	//ESO
 	float takeoff_time;
@@ -254,9 +253,9 @@ private:
 	float _time_difference;
 
 
-	float k_t1=2.0f;
-	float k_t2=1.2f;
-	float k_t3=4.0f;
-	float kappa_t=0.9f;
+	float k_t1=8.0f;
+	float k_t2=2.0f;
+	//float k_t3=4.0f;
+	float kappa_t=1.6f;
 
 };

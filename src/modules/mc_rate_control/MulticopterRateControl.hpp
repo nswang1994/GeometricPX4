@@ -181,8 +181,8 @@ private:
 		(ParamFloat<px4::params::MC_ACRO_SUPEXPOY>) _param_mc_acro_supexpoy,			/**< superexpo stick curve shape (yaw) */
 
 
-		(ParamFloat<px4::params::MC_FFTS_K_A>) _param_mc_fftsadrc_k_a,
-		(ParamFloat<px4::params::MC_FFTS_KAPPA_A>) _param_mc_fftsadrc_kappa_a,
+		(ParamFloat<px4::params::MC_ES_KP>) _param_mc_es_adrc_kp,
+		(ParamFloat<px4::params::MC_ES_KD>) _param_mc_es_adrc_kd,
 		(ParamBool<px4::params::MC_BAT_SCALE_EN>) _param_mc_bat_scale_en,
 
 		(ParamInt<px4::params::CBRK_RATE_CTRL>) _param_cbrk_rate_ctrl

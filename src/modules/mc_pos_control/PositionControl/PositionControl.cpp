@@ -50,10 +50,10 @@ void PositionControl::setVelocityGains(const Vector3f &P, const Vector3f &I, con
 	_gain_vel_i = I;
 	_gain_vel_d = D;
 }
-void PositionControl::setGeoGains(const float &kT, const float &kappaT){
-	k_T = 0.1f*kT;
-	kappa_T = 0.1f*kappaT;
-}
+//void PositionControl::setGeoGains(const float &_kP, const float &_kD){
+//	kP = _kP;
+//	kD = _kD;
+//}
 void PositionControl::setVelocityLimits(const float vel_horizontal, const float vel_up, const float vel_down)
 {
 	_lim_vel_horizontal = vel_horizontal;
@@ -147,20 +147,17 @@ void PositionControl::_velocityControl(const float dt, const bool landed, const 
 	// PID velocity control
 
 	//Vector3f pos_error = _pos - _pos_sp;
-	Vector3f vel_error;
-	Vector3f vel_error_velocity = _vel_sp -_vel;
-	ControlMath::addIfNotNanVector3f(vel_error, vel_error_velocity);
-
-	Vector3f psi_T = vel_error  + kappa_T*(_vel_int + pow(_vel_int.norm_squared(),(1.0f/_p-1.0f))* _vel_int);
-	Matrix3f H;
-	H.HouseHolder(_vel_int ,1.0f - 1.0f/_p);
-
-	Vector3f acc_sp_velocity = k_T * L_*(psi_T+ pow(psi_T.norm_squared(),(1.0f/_p-1.0f))*psi_T)
-	+ kappa_T * (vel_error + pow(_vel_int.norm_squared(),(1.0f/_p-1.0f))*H*vel_error) - phiD_rejection;
+	//Vector3f vel_error;
+	//Vector3f vel_error_velocity = _vel_sp -_vel;
+	//ControlMath::addIfNotNanVector3f(vel_error, vel_error_velocity);
 
 
-	//Vector3f vel_error = _vel_sp - _vel;
-	//Vector3f acc_sp_velocity = vel_error.emult(_gain_vel_p) + _vel_int - _vel_dot.emult(_gain_vel_d);//- phiD_rejection;
+	//Vector3f acc_sp_velocity = k_T * L_*(psi_T+ pow(psi_T.norm_squared(),(1.0f/_p-1.0f))*psi_T)
+	//+ kappa_T * (vel_error + pow(_vel_int.norm_squared(),(1.0f/_p-1.0f))*H*vel_error) - phiD_rejection;
+
+
+	Vector3f vel_error = _vel_sp - _vel;
+	Vector3f acc_sp_velocity = vel_error.emult(_gain_vel_p) + _vel_int - _vel_dot.emult(_gain_vel_d)- phiD_rejection;
 
 	// No control input from setpoints or corresponding states which are NAN
 	ControlMath::addIfNotNanVector3f(_acc_sp, acc_sp_velocity);
@@ -296,23 +293,9 @@ void PositionControl::TranslationalESO(matrix::Vector3f phi,float dt){
 	Vector3f ev = _vel - vel_hat;
 	Vector3f psiT = ev+ kappa_t*eb;
 	pos_hat_next = pos_hat + vel_hat*dt;
-	vel_hat_next = vel_hat + dt*Vector3f( k_t1*phi1(psiT)+  phi+  phiD_hat
-	+ kappa_t* ev + kappa_t*pow(eb.norm_squared(),1.0f/_p-1.0f)* ev) ;
-	phiD_hat_next = phiD_hat + dt*Vector3f(k_t2*phi2(psiT));
+	vel_hat_next = vel_hat + dt*Vector3f( k_t1*psiT+  phi+  phiD_hat
+	+ kappa_t* ev  );
+	phiD_hat_next = phiD_hat + dt*Vector3f(k_t2*psiT);
 	return;
 }
 
-
-matrix::Vector3f PositionControl::phi1(matrix::Vector3f e1){
-	Vector3f output;
-	output = k_t3 * e1 + pow(e1.norm_squared(), (1.0f-_p)/(3.0f*_p -2.0f))*e1;
-	return output;
-}
-
-matrix::Vector3f PositionControl::phi2(matrix::Vector3f e1){
-	Vector3f output;
-	output = pow(k_t3, 2.0f) * e1
-	+ ((2.0f*k_t3*(2.0f*_p-1.0f))/(3.0f*_p-2.0f))*pow(e1.norm_squared(), (1.0f-_p)/(3.0f*_p -2.0f))*e1
-	+ (_p/(3.0f*_p-2.0f))*pow(e1.norm_squared(), 2*(1.0f-_p)/(3.0f*_p -2.0f))*e1;
-	return output;
-}
