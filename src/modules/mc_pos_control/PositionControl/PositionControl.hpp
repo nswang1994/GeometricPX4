@@ -253,9 +253,9 @@ private:
 	float _time_difference;
 
 
-	float k_t1=8.0f;
+	float k_t1=6.0f;
 	float k_t2=2.0f;
 	//float k_t3=4.0f;
-	float kappa_t=1.6f;
+	float kappa_t=1.8f;
 
 };
