@@ -134,7 +134,7 @@ private:
 	//matrix::MatrixfSO3 R_sp;
 	//matrix::MatrixfSO3 R;
 	float J[9] = { 0.03f, 0.0f, 0.0f, 0.0f, 0.03f, 0.0f, 0.0f, 0.0f, 0.06f };
-	float L[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.5f };
+	float L[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.6f };
 	float Id[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 	matrix::MatrixfSO3 L_{L};
 	matrix::MatrixfSO3 J_{J};

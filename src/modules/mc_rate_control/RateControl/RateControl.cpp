@@ -34,7 +34,7 @@
 /**
  * @file RateControl.cpp
  */
-
+#include <poll.h>
 #include <RateControl.hpp>
 #include <px4_platform_common/defines.h>
 
@@ -86,6 +86,11 @@ Vector3f RateControl::update(	const matrix::Vector3f &Omega, const matrix::Vecto
 	Q = R.transpose()*Rd;
 	Vector3f omega = Omega -Q.transpose()*Omegad;
 	Vector3f psi_A = omega + kappa_A*L_*(Q.sKgenerator() + pow(Vector3f(Q.sKgenerator()).norm_squared(),(1.0f/_p-1.0f))* Q.sKgenerator());
+
+	//PX4_INFO("psi_A:\t%8.4f\t%8.4f\t%8.4f",
+	//				(double)psi_A(0),
+	//				(double)psi_A(1),
+	//				(double)psi_A(2));
 	Vector3f w = Q.wGenerator(omega);
 	Matrix3f H;
 
@@ -94,7 +99,7 @@ Vector3f RateControl::update(	const matrix::Vector3f &Omega, const matrix::Vecto
 	//Vector3f sK = Q.sKgenerator();
 	//Vector3f dOmegad = (Omegad-OmegadPrev)/0.01f;
 	const Vector3f torque = -k_A * L_* (psi_A+ pow(psi_A.norm_squared(),(1.0f/_p-1.0f))*psi_A)
-	- kappa_A * J_*(w + pow(Vector3f(Q.sKgenerator()).norm_squared(),(1.0f/_p-1.0f))*H*w)
+	- kappa_A * J_*L_*(w + pow(Vector3f(Q.sKgenerator()).norm_squared(),(1.0f/_p-1.0f))*H*w)
 	+ J_ * (Q.transpose() * Vector3f((Omegad-OmegadPrev)/0.01f)  - omega.skew() * Q.transpose() * Omegad)
 	- Vector3f(J_ * Omega )% Omega - tauD_rejection;
 

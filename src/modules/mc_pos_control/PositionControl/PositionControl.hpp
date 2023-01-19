@@ -255,8 +255,8 @@ private:
 
 
 	float k_t1=2.0f;
-	float k_t2=1.2f;
+	float k_t2=1.5f;
 	float k_t3=4.0f;
-	float kappa_t=0.9f;
+	float kappa_t=0.3f;
 
 };
