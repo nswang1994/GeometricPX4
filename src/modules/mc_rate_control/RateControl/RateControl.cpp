@@ -86,7 +86,7 @@ Vector3f RateControl::update(	const matrix::Vector3f &Omega, const matrix::Vecto
 	Q = R.transpose()*Rd;
 	Vector3f omega = Omega -Q.transpose()*Omegad;
 
-	const Vector3f torque = -kP * L_* Vector3f(Q.sKgenerator())- kD  *omega
+	const Vector3f torque = -kP * L_* Vector3f(Q.sKgenerator())- kD  *L_*omega
 	+ J_ * (Q.transpose() * Vector3f((Omegad-OmegadPrev)/0.01f)  - omega.skew() * Q.transpose() * Omegad)
 	- Vector3f(J_ * Omega )% Omega- tauD_rejection;
 
@@ -163,7 +163,7 @@ void RateControl::getRateControlStatus(rate_ctrl_status_s &rate_ctrl_status)
 
 void RateControl::AttitudeESO(matrix::Vector3f tau, float dt){
 
-	ControlMath::addIfNotNanVector3f(_acc_sp, acc_sp_velocity);
+	//ControlMath::addIfNotNanVector3f(_acc_sp, acc_sp_velocity);
 	Vector3f eR = MatrixfSO3(R_hat.transpose()*R_).sKgenerator();
 	MatrixfSO3 eQ;
 	eQ = R_hat.transpose()*R_;
