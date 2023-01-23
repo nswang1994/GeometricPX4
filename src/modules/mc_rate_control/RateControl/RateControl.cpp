@@ -47,8 +47,10 @@ void RateControl::setGains(const Vector3f &P, const Vector3f &I, const Vector3f 
 	_gain_d = D;
 }
 
-void RateControl::setGeoGains(const float &kA_, const float &kappaA_){
+void RateControl::setGeoGains(const float &kA_, const float &kQ_, const float &kI_, const float &kappaA_){
 	k_A = 0.01f*kA_;
+	k_Q = 0.01f*kQ_;
+	k_I = 0.01f*kI_;
 	kappa_A = 0.1f*kappaA_;
 	return;
 }
@@ -85,7 +87,7 @@ Vector3f RateControl::update(	const matrix::Vector3f &Omega, const matrix::Vecto
 	//Vector3f rate_error = Omegad - Omega;
 	Q = R.transpose()*Rd;
 	Vector3f omega = Omega -Q.transpose()*Omegad;
-	Vector3f psi_A = omega + kappa_A*L_*(Q.sKgenerator() + pow(Vector3f(Q.sKgenerator()).norm_squared(),(1.0f/_p-1.0f))* Q.sKgenerator());
+	Vector3f psi_A = omega + kappa_A*L_*(Q.sKgenerator()+ pow(Vector3f(Q.sKgenerator()).norm_squared(),(1.0f/_p-1.0f))* Q.sKgenerator());
 
 	//PX4_INFO("psi_A:\t%8.4f\t%8.4f\t%8.4f",
 	//				(double)psi_A(0),
@@ -93,48 +95,49 @@ Vector3f RateControl::update(	const matrix::Vector3f &Omega, const matrix::Vecto
 	//				(double)psi_A(2));
 	Vector3f w = Q.wGenerator(omega);
 	Matrix3f H;
+	H.HouseHolder(Q.sKgenerator() ,1.0f - 1.0f/_p);
 
-
-	H.HouseHolder(Q.sKgenerator(),1.0f - 1.0f/_p);
-	//Vector3f sK = Q.sKgenerator();
-	//Vector3f dOmegad = (Omegad-OmegadPrev)/0.01f;
-	const Vector3f torque = -k_A * L_* (psi_A+ pow(psi_A.norm_squared(),(1.0f/_p-1.0f))*psi_A)
+	const Vector3f torque = -k_A * L_* (psi_A+ pow(psi_A.norm_squared(),(1.0f/_p-1.0f))*psi_A) - k_Q *L_*Q.sKgenerator() - psi_I
 	- kappa_A * J_*L_*(w + pow(Vector3f(Q.sKgenerator()).norm_squared(),(1.0f/_p-1.0f))*H*w)
-	+ J_ * (Q.transpose() * Vector3f((Omegad-OmegadPrev)/0.01f)  - omega.skew() * Q.transpose() * Omegad)
+	+ J_ * (Q.transpose() * Vector3f((Omegad-Omegad_Prev)/0.01f)  - omega.skew() * Q.transpose() * Omegad)
 	- Vector3f(J_ * Omega )% Omega - tauD_rejection;
-
 
 	// PID control with feed forward
 	//const Vector3f torque = _gain_p.emult(rate_error) + _rate_int - _gain_d.emult(angular_accel) + _gain_ff.emult(Omegad);
-	//clock_t clock();
 	// update integral only if we are not landed
-	if (!landed) {
-		if (ESOflag == 1){
-			takeoff_time = time;
-			ESOflag = 0;
+	if(ThereIsESO){
+		if (!landed) {
+			if (ESOflag){
+				takeoff_time = time;
+				ESOflag = 0;
+			}
+			R_ = R;
+			AttitudeESO(torque, dt);
+			tauD_hat = tauD_hatnext;
+			Omega_hat = Omega_hatnext;
+			R_hat = R_hatnext;
+			if (!ESOflag && (time-takeoff_time)/1000000>5){
+				tauD_rejection = tauD_hat;
+			}else{
+				tauD_rejection = {0.0f,0.0f,0.0f};
+			}
+		}else{
+			ESOflag = 1;
+			tauD_rejection = {0.0f,0.0f,0.0f};
 		}
-		R_ = R;
-		AttitudeESO(torque, dt);
-		tauD_hat = tauD_hatnext;
-		Omega_hat = Omega_hatnext;
-		R_hat = R_hatnext;
-
+	}else{
+		tauD_rejection = {0.0f,0.0f,0.0f};
 	}
-	if ((time-takeoff_time)/1000000>5){
-		tauD_rejection = tauD_hat;
-
+	Omegad_Prev = Omegad;
+	if (!landed && (time-takeoff_time)/1000000>3) {
+		updateIntegral(psi_A, dt);
 	}
-
-	OmegadPrev = Omegad;
-	//if (!landed) {
-	//	updateIntegral(rate_error, dt);
-	//}
-
 	return torque;
 }
 
-void RateControl::updateIntegral(Vector3f &rate_error, const float dt)
+void RateControl::updateIntegral(Vector3f &psi, const float dt)
 {
+	/*
 	for (int i = 0; i < 3; i++) {
 		// prevent further positive control saturation
 		if (_control_allocator_saturation_positive(i)) {
@@ -163,13 +166,26 @@ void RateControl::updateIntegral(Vector3f &rate_error, const float dt)
 			_rate_int(i) = math::constrain(rate_i, -_lim_int(i), _lim_int(i));
 		}
 	}
+	*/
+	Vector3f psi_i;
+	psi_i = psi_I - k_I*L_* Vector3f(psi_I+ pow(psi_I.norm_squared(),1.0f/_p-1.0f)*psi_I)*dt + psi*dt;
+	for (int i = 0; i < 3; i++) {
+		if(abs(psi_i(i))<_lim_int(i)){
+			psi_I(i) = psi_i(i);
+		}
+		else{
+			psi_I(i) = _lim_int(i)*sign(psi_i(i));
+		}
+
+	}
+	return;
 }
 
 void RateControl::getRateControlStatus(rate_ctrl_status_s &rate_ctrl_status)
 {
-	rate_ctrl_status.rollspeed_integ = _rate_int(0);
-	rate_ctrl_status.pitchspeed_integ = _rate_int(1);
-	rate_ctrl_status.yawspeed_integ = _rate_int(2);
+	rate_ctrl_status.rollspeed_integ = psi_I(0);
+	rate_ctrl_status.pitchspeed_integ = psi_I(1);
+	rate_ctrl_status.yawspeed_integ = psi_I(2);
 }
 
 

@@ -90,7 +90,8 @@ public:
 	 * @param D 3D vector of derivative gains
 	 */
 	void setVelocityGains(const matrix::Vector3f &P, const matrix::Vector3f &I, const matrix::Vector3f &D);
-	void setGeoGains(const float &kT, const float &kappaT);
+	void setGeoGains(const float &kT_, const float &kI_, const float &kappaT_);
+	void setESO(const bool &ESO) { ThereIsESO = ESO; };
 
 	/**
 	 * Set the maximum velocity to execute with feed forward and position control
@@ -219,10 +220,13 @@ private:
 	matrix::Vector3f _pos_sp; /**< desired position */
 	matrix::Vector3f _pos_sp_prev; /**< desired position prev*/
 	matrix::Vector3f _vel_sp; /**< desired velocity */
+	matrix::Vector3f _vel_sp_prev; /**< desired position prev*/
 	matrix::Vector3f _acc_sp; /**< desired acceleration */
 	matrix::Vector3f _thr_sp; /**< desired thrust */
 	float _yaw_sp{}; /**< desired heading */
 	float _yawspeed_sp{}; /** desired yaw-speed */
+
+	matrix::Vector3f acc_sp_donkey; /**< desired acceleration */
 
 
 
@@ -232,13 +236,14 @@ private:
 
 	//float kpos = 3.0f;
 	float k_T;
-
+	float k_I;
 	float kappa_T;
-	float _p = 1.2f;
+	float _p = 1.1f;
 
 	//ESO
 	float takeoff_time;
 	bool ESOflag=1;
+	bool ThereIsESO;
 
 	matrix::Vector3f pos_hat_next;
 	matrix::Vector3f pos_hat{0,0,0};
@@ -254,9 +259,9 @@ private:
 	float _time_difference;
 
 
-	float k_t1=2.0f;
-	float k_t2=1.5f;
-	float k_t3=4.0f;
-	float kappa_t=0.3f;
+	float k_t1=10.0f;
+	float k_t2=5.0f;
+	float k_t3=2.0f;
+	float kappa_t=0.5f;
 
 };

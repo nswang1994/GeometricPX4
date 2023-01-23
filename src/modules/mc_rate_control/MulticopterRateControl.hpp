@@ -182,7 +182,12 @@ private:
 
 
 		(ParamFloat<px4::params::MC_FFTS_K_A>) _param_mc_fftsadrc_k_a,
+		(ParamFloat<px4::params::MC_FFTS_K_Q>) _param_mc_fftsadrc_k_q,
+		(ParamFloat<px4::params::MC_FFTS_K_I>) _param_mc_fftsadrc_k_i,
 		(ParamFloat<px4::params::MC_FFTS_KAPPA_A>) _param_mc_fftsadrc_kappa_a,
+
+		(ParamBool<px4::params::MC_FFTS_ESO>) _param_mc_fftsadrc_eso,
+
 		(ParamBool<px4::params::MC_BAT_SCALE_EN>) _param_mc_bat_scale_en,
 
 		(ParamInt<px4::params::CBRK_RATE_CTRL>) _param_cbrk_rate_ctrl

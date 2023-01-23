@@ -86,7 +86,11 @@ MulticopterRateControl::parameters_updated()
 
 
 	_rate_control.setGeoGains(	_param_mc_fftsadrc_k_a.get(),
+					_param_mc_fftsadrc_k_q.get(),
+					_param_mc_fftsadrc_k_i.get(),
 					_param_mc_fftsadrc_kappa_a.get());
+
+	_rate_control.setESO(_param_mc_fftsadrc_eso.get());
 
 	_rate_control.setIntegratorLimit(
 		Vector3f(_param_mc_rr_int_lim.get(), _param_mc_pr_int_lim.get(), _param_mc_yr_int_lim.get()));
@@ -255,11 +259,12 @@ MulticopterRateControl::Run()
 				// TODO: send the unallocated value directly for better anti-windup
 				_rate_control.setSaturationStatus(saturation_positive, saturation_negative);
 			}
-
+			//MatrixfSO3 ID;
+			//ID.setIdentity();
 			// run rate controller
 			//const Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
 			const Vector3f att_control = _rate_control.update(rates, _rates_sp, R, R_d, angular_accel, dt, _maybe_landed || _landed, float(hrt_absolute_time()));
-
+			//const Vector3f att_control = _rate_control.update(rates, Vector3f({0.0f,0.0f,0.0f}), R, ID, angular_accel, dt, _maybe_landed || _landed, float(hrt_absolute_time()));
 
 			// publish rate controller status
 			rate_ctrl_status_s rate_ctrl_status{};

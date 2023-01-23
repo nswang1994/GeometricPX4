@@ -57,8 +57,8 @@ public:
 	 * @param D 3D vector of derivative gains
 	 */
 	void setGains(const matrix::Vector3f &P, const matrix::Vector3f &I, const matrix::Vector3f &D);
-	void setGeoGains(const float &kA_, const float &kappaA_);
-
+	void setGeoGains(const float &kA_, const float &kQ_, const float &kI_, const float &kappaA_);
+	void setESO(const bool &ESO) { ThereIsESO = ESO; };
 	/**
 	 * Set the mximum absolute value of the integrator for all axes
 	 * @param integrator_limit limit value for all axes x, y, z
@@ -96,7 +96,7 @@ public:
 	 * Set the integral term to 0 to prevent windup
 	 * @see _rate_int
 	 */
-	void resetIntegral() { _rate_int.zero(); }
+	void resetIntegral() { psi_I={0.001f,0.0f,0.001f};; }
 
 	/**
 	 * Get status message of controller for logging/debugging
@@ -111,6 +111,7 @@ private:
 	void AttitudeESO(matrix::Vector3f tau, float dt);
 	float takeoff_time;
 	bool ESOflag=1;
+	bool ThereIsESO;
 	matrix::Vector3f phi1(matrix::Vector3f e1);
 	matrix::Vector3f phi2(matrix::Vector3f e1);
 
@@ -122,7 +123,7 @@ private:
 	matrix::Vector3f _gain_ff; ///< direct rate to torque feed forward gain only useful for helicopters
 
 	// States
-	matrix::Vector3f _rate_int; ///< integral term of the rate controller
+	matrix::Vector3f psi_I; ///< integral term of the rate controller
 
 	// Feedback from control allocation
 	matrix::Vector<bool, 3> _control_allocator_saturation_negative;
@@ -134,12 +135,14 @@ private:
 	//matrix::MatrixfSO3 R_sp;
 	//matrix::MatrixfSO3 R;
 	float J[9] = { 0.03f, 0.0f, 0.0f, 0.0f, 0.03f, 0.0f, 0.0f, 0.0f, 0.06f };
-	float L[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.6f };
+	float L[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 2.0f };
 	float Id[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 	matrix::MatrixfSO3 L_{L};
 	matrix::MatrixfSO3 J_{J};
 	matrix::MatrixfSO3 Q;
 	float k_A;
+	float k_Q;
+	float k_I;
 	float kappa_A;
 
 
@@ -159,10 +162,10 @@ private:
 
 
 	matrix::MatrixfSO3 R_;
-	float k_a1=6.0f;
-	float k_a2=4.0f;
-	float k_a3=3.0f;
+	float k_a1=12.0f;
+	float k_a2=3.0f;
+	float k_a3=1.2f;
 	float kappa_a=0.8f;
 	//matrix::Vector3f Omega;
-	matrix::Vector3f OmegadPrev;
+	matrix::Vector3f Omegad_Prev;
 };

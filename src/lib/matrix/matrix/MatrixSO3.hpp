@@ -101,9 +101,9 @@ namespace matrix
 			const MatrixSO3& Q(*this);
 			Vector3<Type> wout;
 
-			wout = 	Vector3<Type>(1, 0, 0)%(omega%Vector3<Type>(Q.transpose() * Vector3<Type>(1, 0, 0))) * 1.2f
-			+ 	Vector3<Type>(0, 1, 0)%(omega%Vector3<Type>(Q.transpose() * Vector3<Type>(0, 1, 0))) * 1.1f
-			+ 	Vector3<Type>(0, 0, 1)%(omega%Vector3<Type>(Q.transpose() * Vector3<Type>(0, 0, 1))) * 1.0f;
+			wout = 	Vector3<Type>(Type(1.2)*Vector3<Type>(1, 0, 0))%Vector3<Type>(omega%Vector3<Type>(Q.transpose() * Vector3<Type>(1, 0, 0)))
+			+ 	Vector3<Type>(Type(1.1)*Vector3<Type>(0, 1, 0))%Vector3<Type>(omega%Vector3<Type>(Q.transpose() * Vector3<Type>(0, 1, 0)))
+			+ 	Vector3<Type>(Type(1.0)*Vector3<Type>(0, 0, 1))%Vector3<Type>(omega%Vector3<Type>(Q.transpose() * Vector3<Type>(0, 0, 1)));
 
 			return wout;
 		}

@@ -50,9 +50,10 @@ void PositionControl::setVelocityGains(const Vector3f &P, const Vector3f &I, con
 	_gain_vel_i = I;
 	_gain_vel_d = D;
 }
-void PositionControl::setGeoGains(const float &kT, const float &kappaT){
-	k_T = 0.1f*kT;
-	kappa_T = 0.1f*kappaT;
+void PositionControl::setGeoGains(const float &kT_, const float &kI_, const float &kappaT_){
+	k_T = 0.1f*kT_;
+	k_I = 0.1f*kI_;
+	kappa_T = 0.1f*kappaT_;
 }
 void PositionControl::setVelocityLimits(const float vel_horizontal, const float vel_up, const float vel_down)
 {
@@ -127,8 +128,9 @@ bool PositionControl::update(const float dt, const bool landed, const float time
 void PositionControl::_positionControl()
 {
 	// P-position controller
-	Vector3f vel_sp_position = (_pos_sp - _pos).emult(_gain_pos_p);
-	//Vector3f vel_sp_position = (_pos_sp-_pos_sp_prev)/_time_difference;
+	Vector3f vel_sp_position = (_pos_sp - _pos).emult(_gain_pos_p);//+ (_pos_sp-_pos_sp_prev)/_time_difference;
+	//+ 0.1f*Vector3f(_pos_sp - _pos)*pow(Vector3f((_pos_sp - _pos)).norm_squared(),1.0f/_p-1.0f)
+	//Vector3f vel_sp_position = (_pos_sp-_pos_sp_prev)/_time_difference + (_pos_sp - _pos).emult(_gain_pos_p);
 	// Position and feed-forward velocity setpoints or position states being NAN results in them not having an influence
 	ControlMath::addIfNotNanVector3f(_vel_sp, vel_sp_position);
 	// make sure there are no NAN elements for further reference while constraining
@@ -139,28 +141,58 @@ void PositionControl::_positionControl()
 	_vel_sp.xy() = ControlMath::constrainXY(vel_sp_position.xy(), (_vel_sp - vel_sp_position).xy(), _lim_vel_horizontal);
 	// Constrain velocity in z-direction.
 	_vel_sp(2) = math::constrain(_vel_sp(2), -_lim_vel_up, _lim_vel_down);
-	//_pos_sp_prev = _pos_sp;
+	_pos_sp_prev = _pos_sp;
 }
 
 void PositionControl::_velocityControl(const float dt, const bool landed, const float time)
 {
 	// PID velocity control
 
-	//Vector3f pos_error = _pos - _pos_sp;
+	Vector3f pos_error_ = _pos_sp-_pos;
+	Vector3f pos_error;
+	ControlMath::addIfNotNanVector3f(pos_error, pos_error_);
+	ControlMath::setZeroIfNanVector3f(pos_error);
 	Vector3f vel_error;
 	Vector3f vel_error_velocity = _vel_sp -_vel;
 	ControlMath::addIfNotNanVector3f(vel_error, vel_error_velocity);
+	ControlMath::setZeroIfNanVector3f(vel_error);
+	//Vector3f acc_sp_monkey = ( _vel_sp -_vel_sp_prev );///0.01f;
+	//acc_sp_donkey = ( _vel_sp -_vel_sp_prev )/0.01f;
+	//ControlMath::addIfNotNanVector3f(acc_sp_donkey, acc_sp_monkey );
+	//ControlMath::setZeroIfNanVector3f(acc_sp_donkey);
 
-	Vector3f psi_T = vel_error  + kappa_T*(_vel_int + pow(_vel_int.norm_squared(),(1.0f/_p-1.0f))* _vel_int);
+	//PX4_INFO("vel:\t%8.4f\t%8.4f\t%8.4f",
+	//				 (double)_vel_sp_prev  (0),
+	//				 (double)_vel_sp_prev  (1),
+	//				 (double)_vel_sp_prev  (2));
+
+	//PX4_INFO("Donkey:\t%8.4f\t%8.4f\t%8.4f",
+	//				 (double)acc_sp_donkey(0),
+	//				 (double)acc_sp_donkey(1),
+	//				 (double)acc_sp_donkey(2));
+
+	//Vector3f _trans_error = buffer*pos_error + _vel_int;
+
+	Vector3f psi_T = vel_error  + kappa_T*(_vel_int+ pow(_vel_int.norm_squared(),(1.0f/_p-1.0f))* _vel_int );
 	Matrix3f H;
 	H.HouseHolder(_vel_int ,1.0f - 1.0f/_p);
 
 	Vector3f acc_sp_velocity = k_T * L_*(psi_T+ pow(psi_T.norm_squared(),(1.0f/_p-1.0f))*psi_T)
-	+ kappa_T * (vel_error + pow(_vel_int.norm_squared(),(1.0f/_p-1.0f))*H*vel_error) - phiD_rejection;
+	+ kappa_T * (vel_error + pow(_vel_int.norm_squared(),(1.0f/_p-1.0f))*H*vel_error) -k_I * _vel_int - phiD_rejection;
+
+
+	//Vector3f psi_T = vel_error  + kappa_T*(_vel_int + pow(pos_error.norm_squared(),(1.0f/_p-1.0f))* pos_error);
+	//Matrix3f H;
+	//H.HouseHolder(pos_error ,1.0f - 1.0f/_p);
+
+	//Vector3f acc_sp_velocity = k_T * L_*(psi_T+ pow(psi_T.norm_squared(),(1.0f/_p-1.0f))*psi_T)
+	//+ kappa_T * (vel_error + pow(pos_error.norm_squared(),(1.0f/_p-1.0f))*H*vel_error) - phiD_rejection;//+acc_sp_donkey;
+
+	//_vel_sp_prev = _vel_sp;
 
 
 	//Vector3f vel_error = _vel_sp - _vel;
-	//Vector3f acc_sp_velocity = vel_error.emult(_gain_vel_p) + _vel_int - _vel_dot.emult(_gain_vel_d);//- phiD_rejection;
+	//Vector3f acc_sp_velocity = vel_error.emult(_gain_vel_p) + _vel_int - _vel_dot.emult(_gain_vel_d)- phiD_rejection;
 
 	// No control input from setpoints or corresponding states which are NAN
 	ControlMath::addIfNotNanVector3f(_acc_sp, acc_sp_velocity);
@@ -212,20 +244,30 @@ void PositionControl::_velocityControl(const float dt, const bool landed, const 
 	// limit thrust integral
 	_vel_int(2) = math::min(fabsf(_vel_int(2)), CONSTANTS_ONE_G) * sign(_vel_int(2));
 
-
-	if(!landed){
-		if (ESOflag == 1){
-			takeoff_time = time;
-			ESOflag = 0;
+	if(ThereIsESO){
+		if(!landed){
+			if (ESOflag){
+				takeoff_time = time;
+				ESOflag = 0;
+			}
+			TranslationalESO(_acc_sp, dt);
+			phiD_hat = phiD_hat_next;
+			vel_hat = vel_hat_next;
+			pos_hat = pos_hat_next;
+			if (!ESOflag &&(time-takeoff_time)/1000000.0f>10.0f){
+				phiD_rejection = phiD_hat;
+			}else{
+				phiD_rejection = {0.0f,0.0f,0.0f};
+			}
+		}else{
+			ESOflag = 1;
+			phiD_rejection = {0.0f,0.0f,0.0f};
 		}
-		TranslationalESO(_acc_sp, dt);
-		phiD_hat = phiD_hat_next;
-		vel_hat = vel_hat_next;
-		pos_hat = pos_hat_next;
+	}else{
+		phiD_rejection = {0.0f,0.0f,0.0f};
 	}
-	if ((time-takeoff_time)/1000000.0f>20.0f){
-		phiD_rejection = phiD_hat;
-	}
+	return;
+
 
 }
 
@@ -294,7 +336,7 @@ void PositionControl::TranslationalESO(matrix::Vector3f phi,float dt){
 	//Vector3f tauDhatnext;
 	Vector3f eb = _pos - pos_hat;
 	Vector3f ev = _vel - vel_hat;
-	Vector3f psiT = ev+ kappa_t*eb;
+	Vector3f psiT = ev+ kappa_t*(eb + pow(eb.norm_squared(),1.0f/_p-1.0f)*eb);
 	pos_hat_next = pos_hat + vel_hat*dt;
 	vel_hat_next = vel_hat + dt*Vector3f( k_t1*phi1(psiT)+  phi+  phiD_hat
 	+ kappa_t* ev + kappa_t*pow(eb.norm_squared(),1.0f/_p-1.0f)* ev) ;
