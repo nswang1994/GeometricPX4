@@ -162,8 +162,8 @@ private:
 
 
 	matrix::MatrixfSO3 R_;
-	float k_a1=12.0f;
-	float k_a2=3.0f;
+	float k_a1=16.0f;
+	float k_a2=6.0f;
 	float k_a3=1.2f;
 	float kappa_a=0.8f;
 	//matrix::Vector3f Omega;

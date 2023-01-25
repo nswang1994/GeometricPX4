@@ -50,9 +50,9 @@ void PositionControl::setVelocityGains(const Vector3f &P, const Vector3f &I, con
 	_gain_vel_i = I;
 	_gain_vel_d = D;
 }
-void PositionControl::setGeoGains(const float &kT_, const float &kI_, const float &kappaT_){
+void PositionControl::setGeoGains(const float &kT_, const float &kP_, const float &kappaT_){
 	k_T = 0.1f*kT_;
-	k_I = 0.1f*kI_;
+	k_P = 0.1f*kP_;
 	kappa_T = 0.1f*kappaT_;
 }
 void PositionControl::setVelocityLimits(const float vel_horizontal, const float vel_up, const float vel_down)
@@ -128,7 +128,7 @@ bool PositionControl::update(const float dt, const bool landed, const float time
 void PositionControl::_positionControl()
 {
 	// P-position controller
-	Vector3f vel_sp_position = (_pos_sp - _pos).emult(_gain_pos_p);//+ (_pos_sp-_pos_sp_prev)/_time_difference;
+	Vector3f vel_sp_position =(_pos_sp - _pos).emult(_gain_pos_p);//+ (_pos_sp-_pos_sp_prev)/0.01f; //
 	//+ 0.1f*Vector3f(_pos_sp - _pos)*pow(Vector3f((_pos_sp - _pos)).norm_squared(),1.0f/_p-1.0f)
 	//Vector3f vel_sp_position = (_pos_sp-_pos_sp_prev)/_time_difference + (_pos_sp - _pos).emult(_gain_pos_p);
 	// Position and feed-forward velocity setpoints or position states being NAN results in them not having an influence
@@ -178,7 +178,7 @@ void PositionControl::_velocityControl(const float dt, const bool landed, const 
 	H.HouseHolder(_vel_int ,1.0f - 1.0f/_p);
 
 	Vector3f acc_sp_velocity = k_T * L_*(psi_T+ pow(psi_T.norm_squared(),(1.0f/_p-1.0f))*psi_T)
-	+ kappa_T * (vel_error + pow(_vel_int.norm_squared(),(1.0f/_p-1.0f))*H*vel_error) -k_I * _vel_int - phiD_rejection;
+	+ kappa_T * (vel_error + pow(_vel_int.norm_squared(),(1.0f/_p-1.0f))*H*vel_error) + k_P * pos_error_  - phiD_rejection ;
 
 
 	//Vector3f psi_T = vel_error  + kappa_T*(_vel_int + pow(pos_error.norm_squared(),(1.0f/_p-1.0f))* pos_error);

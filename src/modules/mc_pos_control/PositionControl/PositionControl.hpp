@@ -90,7 +90,7 @@ public:
 	 * @param D 3D vector of derivative gains
 	 */
 	void setVelocityGains(const matrix::Vector3f &P, const matrix::Vector3f &I, const matrix::Vector3f &D);
-	void setGeoGains(const float &kT_, const float &kI_, const float &kappaT_);
+	void setGeoGains(const float &kT_, const float &kP_, const float &kappaT_);
 	void setESO(const bool &ESO) { ThereIsESO = ESO; };
 
 	/**
@@ -236,9 +236,9 @@ private:
 
 	//float kpos = 3.0f;
 	float k_T;
-	float k_I;
+	float k_P;
 	float kappa_T;
-	float _p = 1.1f;
+	float _p = 1.10f;
 
 	//ESO
 	float takeoff_time;
@@ -259,8 +259,8 @@ private:
 	float _time_difference;
 
 
-	float k_t1=10.0f;
-	float k_t2=5.0f;
+	float k_t1=12.0f;
+	float k_t2=6.0f;
 	float k_t3=2.0f;
 	float kappa_t=0.5f;
 
