@@ -95,21 +95,28 @@ Vector3f RateControl::update(	const matrix::Vector3f &Omega, const matrix::Vecto
 	//const Vector3f torque = _gain_p.emult(rate_error) + _rate_int - _gain_d.emult(angular_accel) + _gain_ff.emult(Omegad);
 	//clock_t clock();
 	// update integral only if we are not landed
-	if (!landed) {
-		if (ESOflag == 1){
-			takeoff_time = time;
-			ESOflag = 0;
+	if(ThereIsESO){
+		if (!landed) {
+			if (ESOflag){
+				takeoff_time = time;
+				ESOflag = 0;
+			}
+			R_ = R;
+			AttitudeESO(torque, dt);
+			tauD_hat = tauD_hatnext;
+			Omega_hat = Omega_hatnext;
+			R_hat = R_hatnext;
+			if (!ESOflag && (time-takeoff_time)/1000000>5){
+				tauD_rejection = tauD_hat;
+			}else{
+				tauD_rejection = {0.0f,0.0f,0.0f};
+			}
+		}else{
+			ESOflag = 1;
+			tauD_rejection = {0.0f,0.0f,0.0f};
 		}
-		R_ = R;
-		AttitudeESO(torque, dt);
-		tauD_hat = tauD_hatnext;
-		Omega_hat = Omega_hatnext;
-		R_hat = R_hatnext;
-
-	}
-	if ((time-takeoff_time)/1000000>5){
-		tauD_rejection = tauD_hat;
-
+	}else{
+		tauD_rejection = {0.0f,0.0f,0.0f};
 	}
 
 	OmegadPrev = Omegad;

@@ -210,18 +210,27 @@ void PositionControl::_velocityControl(const float dt, const bool landed, const 
 	_vel_int(2) = math::min(fabsf(_vel_int(2)), CONSTANTS_ONE_G) * sign(_vel_int(2));
 
 
-	if(!landed){
-		if (ESOflag == 1){
-			takeoff_time = time;
-			ESOflag = 0;
+	if(ThereIsESO){
+		if(!landed){
+			if (ESOflag){
+				takeoff_time = time;
+				ESOflag = 0;
+			}
+			TranslationalESO(acc_sp_velocity, dt);
+			phiD_hat = phiD_hat_next;
+			vel_hat = vel_hat_next;
+			pos_hat = pos_hat_next;
+			if (!ESOflag &&(time-takeoff_time)/1000000.0f>10.0f){
+				phiD_rejection = phiD_hat_next;
+			}else{
+				phiD_rejection = {0.0f,0.0f,0.0f};
+			}
+		}else{
+			ESOflag = 1;
+			phiD_rejection = {0.0f,0.0f,0.0f};
 		}
-		TranslationalESO(_acc_sp, dt);
-		phiD_hat = phiD_hat_next;
-		vel_hat = vel_hat_next;
-		pos_hat = pos_hat_next;
-	}
-	if ((time-takeoff_time)/1000000.0f>20.0f){
-		phiD_rejection = phiD_hat;
+	}else{
+		phiD_rejection = {0.0f,0.0f,0.0f};
 	}
 
 }

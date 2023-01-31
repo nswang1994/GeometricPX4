@@ -183,6 +183,7 @@ private:
 
 		(ParamFloat<px4::params::MC_ES_KP>) _param_mc_es_adrc_kp,
 		(ParamFloat<px4::params::MC_ES_KD>) _param_mc_es_adrc_kd,
+		(ParamBool<px4::params::MC_ES_ESO>) _param_mc_es_adrc_eso,
 		(ParamBool<px4::params::MC_BAT_SCALE_EN>) _param_mc_bat_scale_en,
 
 		(ParamInt<px4::params::CBRK_RATE_CTRL>) _param_cbrk_rate_ctrl

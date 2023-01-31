@@ -90,7 +90,7 @@ public:
 	 * @param D 3D vector of derivative gains
 	 */
 	void setVelocityGains(const matrix::Vector3f &P, const matrix::Vector3f &I, const matrix::Vector3f &D);
-	void setGeoGains(const float &kT, const float &kappaT);
+	void setESO(const bool &ESO) { ThereIsESO = ESO; };
 
 	/**
 	 * Set the maximum velocity to execute with feed forward and position control
@@ -238,6 +238,7 @@ private:
 	//ESO
 	float takeoff_time;
 	bool ESOflag=1;
+	bool ThereIsESO;
 
 	matrix::Vector3f pos_hat_next;
 	matrix::Vector3f pos_hat{0,0,0};

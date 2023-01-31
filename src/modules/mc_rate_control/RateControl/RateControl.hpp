@@ -58,6 +58,7 @@ public:
 	 */
 	void setGains(const matrix::Vector3f &P, const matrix::Vector3f &I, const matrix::Vector3f &D);
 	void setGeoGains(const float & _kP, const float & _kD);
+	void setESO(const bool &ESO) { ThereIsESO = ESO; };
 
 	/**
 	 * Set the mximum absolute value of the integrator for all axes
@@ -111,6 +112,7 @@ private:
 	void AttitudeESO(matrix::Vector3f tau, float dt);
 	float takeoff_time;
 	bool ESOflag=1;
+	bool ThereIsESO;
 
 	// Gains
 	matrix::Vector3f _gain_p; ///< rate control proportional gain for all axes x, y, z
