@@ -1,5 +1,5 @@
 # Summary
-This repository contains the flight controller, and the fast finite-time stable extended state observer (FFTS-ESO) for a quadrotor subjected to complex disturbances. The implementation is based on the open-source autopilot [PX4](https://github.com/PX4/PX4-Autopilot), v1.13.2. The FFTS-ESO is implemented onto the module \texttt{mc\_pos\_control} and \texttt{mc\_rate\_control} for translational
+This repository contains the flight controller, and the fast finite-time stable extended state observer (FFTS-ESO) for a quadrotor subjected to complex disturbances. The implementation is based on the open-source autopilot [PX4](https://github.com/PX4/PX4-Autopilot), v1.13.2. The FFTS-ESO is implemented onto the module mc\_pos\_control and mc\_rate\_control for translational
 and rotational motions, respectively.
 # Citation
 TBD
