@@ -55,6 +55,8 @@
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/rate_ctrl_status.h>
+#include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_attitude_setpoint.h>
 #include <uORB/topics/vehicle_angular_acceleration.h>
 #include <uORB/topics/vehicle_angular_velocity.h>
 #include <uORB/topics/vehicle_control_mode.h>
@@ -109,6 +111,9 @@ private:
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
 
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
+
+	uORB::Subscription _vehicle_attitude_setpoint_sub{ORB_ID(vehicle_attitude_setpoint)};
+	uORB::SubscriptionCallbackWorkItem _vehicle_attitude_sub{this, ORB_ID(vehicle_attitude)};
 
 	uORB::SubscriptionCallbackWorkItem _vehicle_angular_velocity_sub{this, ORB_ID(vehicle_angular_velocity)};
 
@@ -171,9 +176,16 @@ private:
 		(ParamFloat<px4::params::MC_ACRO_P_MAX>) _param_mc_acro_p_max,
 		(ParamFloat<px4::params::MC_ACRO_Y_MAX>) _param_mc_acro_y_max,
 		(ParamFloat<px4::params::MC_ACRO_EXPO>) _param_mc_acro_expo,				/**< expo stick curve shape (roll & pitch) */
-		(ParamFloat<px4::params::MC_ACRO_EXPO_Y>) _param_mc_acro_expo_y,				/**< expo stick curve shape (yaw) */
+		(ParamFloat<px4::params::MC_ACRO_EXPO_Y>) _param_mc_acro_expo_y,			/**< expo stick curve shape (yaw) */
 		(ParamFloat<px4::params::MC_ACRO_SUPEXPO>) _param_mc_acro_supexpo,			/**< superexpo stick curve shape (roll & pitch) */
 		(ParamFloat<px4::params::MC_ACRO_SUPEXPOY>) _param_mc_acro_supexpoy,			/**< superexpo stick curve shape (yaw) */
+
+
+		(ParamBool<px4::params::MC_FTSESO_EN>) _param_mc_ftseso_en,
+		(ParamFloat<px4::params::MC_FTSESO_K1>) _param_mc_ftseso_k1,
+		(ParamFloat<px4::params::MC_FTSESO_K2>) _param_mc_ftseso_k2,
+		(ParamFloat<px4::params::MC_FTSESO_K3>) _param_mc_ftseso_k3,
+		(ParamFloat<px4::params::MC_FTSESO_KAPPA>) _param_mc_ftseso_kappa,
 
 		(ParamBool<px4::params::MC_BAT_SCALE_EN>) _param_mc_bat_scale_en,
 
@@ -181,5 +193,7 @@ private:
 	)
 
 	matrix::Vector3f _acro_rate_max;	/**< max attitude rates in acro mode */
+
+	matrix::MatrixfSO3 R;
 
 };

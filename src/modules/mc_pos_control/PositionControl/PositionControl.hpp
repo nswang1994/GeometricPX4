@@ -38,7 +38,6 @@
  */
 
 #pragma once
-
 #include <lib/mathlib/mathlib.h>
 #include <matrix/matrix/math.hpp>
 #include <uORB/topics/vehicle_attitude_setpoint.h>
@@ -91,6 +90,8 @@ public:
 	 * @param D 3D vector of derivative gains
 	 */
 	void setVelocityGains(const matrix::Vector3f &P, const matrix::Vector3f &I, const matrix::Vector3f &D);
+	void setESOGains(const float &K1, const float &K2, const float &K3, const float &Kappa);
+	void setESO(const bool &ESO) { ThereIsESO = ESO; };
 
 	/**
 	 * Set the maximum velocity to execute with feed forward and position control
@@ -154,7 +155,7 @@ public:
 	 * @param dt time in seconds since last iteration
 	 * @return true if update succeeded and output setpoint is executable, false if not
 	 */
-	bool update(const float dt);
+	bool update(const float dt, const bool landed, const float time);
 
 	/**
 	 * Set the integral term in xy to 0.
@@ -182,9 +183,15 @@ private:
 	bool _inputValid();
 
 	void _positionControl(); ///< Position proportional control
-	void _velocityControl(const float dt); ///< Velocity PID control
+	void _velocityControl(const float dt, const bool landed, const float time); ///< Velocity PID control
 	void _accelerationControl(); ///< Acceleration setpoint processing
 
+
+
+	//ESO
+	void TranslationalESO(matrix::Vector3f phi,float dt);
+	matrix::Vector3f phi1(matrix::Vector3f e1);
+	matrix::Vector3f phi2(matrix::Vector3f e1);
 	// Gains
 	matrix::Vector3f _gain_pos_p; ///< Position control proportional gain
 	matrix::Vector3f _gain_vel_p; ///< Velocity control proportional gain
@@ -211,9 +218,47 @@ private:
 
 	// Setpoints
 	matrix::Vector3f _pos_sp; /**< desired position */
+	matrix::Vector3f _pos_sp_prev; /**< desired position prev*/
 	matrix::Vector3f _vel_sp; /**< desired velocity */
+	matrix::Vector3f _vel_sp_prev; /**< desired position prev*/
 	matrix::Vector3f _acc_sp; /**< desired acceleration */
 	matrix::Vector3f _thr_sp; /**< desired thrust */
 	float _yaw_sp{}; /**< desired heading */
 	float _yawspeed_sp{}; /** desired yaw-speed */
+
+	matrix::Vector3f acc_sp_donkey; /**< desired acceleration */
+
+
+
+	//Tracking Control
+	float L[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 2.0f };
+	matrix::MatrixfSO3 L_{L};
+
+	//float kpos = 3.0f;
+	float _p = 1.20f;
+
+	//ESO
+	float takeoff_time;
+	bool ESOflag=1;
+	bool ThereIsESO;
+
+	matrix::Vector3f pos_hat_next;
+	matrix::Vector3f pos_hat{0,0,0};
+	//matrix::Vector3f _b;
+	matrix::Vector3f vel_hat_next;
+	matrix::Vector3f vel_hat{0,0,0};
+	//matrix::Vector3f _v;
+	matrix::Vector3f phiD_hat_next;
+	matrix::Vector3f phiD_hat{0,0,0};
+	matrix::Vector3f phiD_rejection;
+
+
+	float _time_difference;
+
+
+	float k_t1;
+	float k_t2;
+	float k_t3;
+	float kappa_t;
+
 };

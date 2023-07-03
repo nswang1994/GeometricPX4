@@ -84,6 +84,14 @@ MulticopterRateControl::parameters_updated()
 		rate_k.emult(Vector3f(_param_mc_rollrate_i.get(), _param_mc_pitchrate_i.get(), _param_mc_yawrate_i.get())),
 		rate_k.emult(Vector3f(_param_mc_rollrate_d.get(), _param_mc_pitchrate_d.get(), _param_mc_yawrate_d.get())));
 
+	_rate_control.setESO(_param_mc_ftseso_en.get());
+
+	_rate_control.setESOGains(
+		_param_mc_ftseso_k1.get(),
+		_param_mc_ftseso_k2.get(),
+		_param_mc_ftseso_k3.get(),
+		_param_mc_ftseso_kappa.get());
+
 	_rate_control.setIntegratorLimit(
 		Vector3f(_param_mc_rr_int_lim.get(), _param_mc_pr_int_lim.get(), _param_mc_yr_int_lim.get()));
 
@@ -207,6 +215,13 @@ MulticopterRateControl::Run()
 				_thrust_sp = -v_rates_sp.thrust_body[2];
 			}
 		}
+		vehicle_attitude_s v_att;
+		if (_vehicle_attitude_sub.update(&v_att)) {
+			// Check for new attitude setpoint
+			Quatf q=Quatf(v_att.q);
+			q.unit();
+			R.quaternion2attitude(q);
+		}
 
 		// run the rate controller
 		if (_v_control_mode.flag_control_rates_enabled && !_actuators_0_circuit_breaker_enabled) {
@@ -239,7 +254,7 @@ MulticopterRateControl::Run()
 			}
 
 			// run rate controller
-			const Vector3f att_control = _rate_control.update(rates, _rates_sp, angular_accel, dt, _maybe_landed || _landed);
+			const Vector3f att_control = _rate_control.update(rates, _rates_sp, R, angular_accel, dt, _maybe_landed || _landed, float(hrt_absolute_time()));
 
 			// publish rate controller status
 			rate_ctrl_status_s rate_ctrl_status{};

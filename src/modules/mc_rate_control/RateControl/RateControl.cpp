@@ -34,7 +34,7 @@
 /**
  * @file RateControl.cpp
  */
-
+#include <poll.h>
 #include <RateControl.hpp>
 #include <px4_platform_common/defines.h>
 
@@ -47,27 +47,59 @@ void RateControl::setGains(const Vector3f &P, const Vector3f &I, const Vector3f 
 	_gain_d = D;
 }
 
+void RateControl::setESOGains(const float &K1, const float &K2, const float &K3, const float &Kappa)
+{
+	k_a1 = K1;
+	k_a2 = K2;
+	k_a3 = K3;
+	kappa_a = Kappa;
+}
+
 void RateControl::setSaturationStatus(const Vector<bool, 3> &saturation_positive,
 				      const Vector<bool, 3> &saturation_negative)
 {
 	_control_allocator_saturation_positive = saturation_positive;
 	_control_allocator_saturation_negative = saturation_negative;
 }
-
-Vector3f RateControl::update(const Vector3f &rate, const Vector3f &rate_sp, const Vector3f &angular_accel,
-			     const float dt, const bool landed)
+Vector3f RateControl::update(	const matrix::Vector3f &Omega, const matrix::Vector3f &Omegad,
+				const matrix::MatrixfSO3 &R, const matrix::Vector3f &angular_accel,
+				 const float dt, const bool landed, const float time)
 {
 	// angular rates error
-	Vector3f rate_error = rate_sp - rate;
+	Vector3f rate_error = Omegad - Omega;
+
 
 	// PID control with feed forward
-	const Vector3f torque = _gain_p.emult(rate_error) + _rate_int - _gain_d.emult(angular_accel) + _gain_ff.emult(rate_sp);
-
+	const Vector3f torque = _gain_p.emult(rate_error) + _rate_int - _gain_d.emult(angular_accel) + _gain_ff.emult(Omegad)-tauD_rejection;
 	// update integral only if we are not landed
-	if (!landed) {
-		updateIntegral(rate_error, dt);
+	if(ThereIsESO){
+		if (!landed) {
+			if (ESOflag){
+				takeoff_time = time;
+				ESOflag = 0;
+			}
+			R_ = R;
+			AttitudeESO(torque, dt);
+			tauD_hat = tauD_hatnext;
+			Omega_hat = Omega_hatnext;
+			R_hat = R_hatnext;
+			if (!ESOflag && float(time-takeoff_time)/1000000.0f>15.0f){
+				tauD_rejection = tauD_hat;
+			}else{
+				tauD_rejection = {0.0f,0.0f,0.0f};
+			}
+		}else{
+			ESOflag = 1;
+			tauD_rejection = {0.0f,0.0f,0.0f};
+		}
+	}else{
+		tauD_rejection = {0.0f,0.0f,0.0f};
 	}
-
+	Omegad_Prev = Omegad;
+	if (!landed ) {//&& float(time-takeoff_time)/1000000.0f>5.0f) {
+		//updateIntegral(psi_A, dt);
+		updateIntegral(rate_error , dt);
+	}
 	return torque;
 }
 
@@ -108,4 +140,43 @@ void RateControl::getRateControlStatus(rate_ctrl_status_s &rate_ctrl_status)
 	rate_ctrl_status.rollspeed_integ = _rate_int(0);
 	rate_ctrl_status.pitchspeed_integ = _rate_int(1);
 	rate_ctrl_status.yawspeed_integ = _rate_int(2);
+}
+
+void RateControl::AttitudeESO(matrix::Vector3f tau, float dt){
+	Vector3f eR = MatrixfSO3(R_hat.transpose()*R_).sKgenerator();
+	MatrixfSO3 eQ;
+	Matrix3f H;
+	H.HouseHolder(eR,1.0f-1.0f/_p);
+	eQ = R_hat.transpose()*R_;
+	Vector3f eOmega = Omega_ - eQ.transpose()*Omega_hat;
+	//Vector3f ew = eQ.wGenerator(eOmega);
+	Vector3f psia = eOmega + kappa_a*(eR+pow(eR.norm_squared(),1.0f/_p - 1.0f)*eR);
+	R_hatnext = R_hat.expmso3(Vector3f(Omega_hat*dt));
+	//Vector3f Omegahatlaw = eQ*inv(J_)*(Vector3f(J_*Omega_).cross(Omega_) +k_a1*J_*psi_a+ tauD_hat + kappa_a*J_* Vector3f (eQ.wGenerator(eOmega))  )+eQ*(eOmega.skew())*eQ.transpose()*Omega_hat;
+	//Vector3f tauDhatlaw = k_a2*J_*psi_a;
+	/***************************************************/
+	Omega_hatnext = Omega_hat
+	+ dt*Vector3f(eQ*inv(J_)*(k_a1*J_*phi1(psia)+ tau + tauD_hat
+	+ kappa_a*J_* Vector3f (eQ.wGenerator(eOmega)) + kappa_a*J_*pow(eR.norm_squared(),1.0f/_p-1.0f)* Vector3f(eQ.wGenerator(eOmega)) )
+	+ eQ*(eOmega.skew())*eQ.transpose()*Omega_hat) ;
+	/***************************************************/
+	tauD_hatnext = tauD_hat
+	+ dt*Vector3f(k_a2*J_*phi2(psia));
+
+	return;
+}
+
+
+matrix::Vector3f RateControl::phi1(matrix::Vector3f e1){
+	Vector3f output;
+	output = k_a3 * e1 + pow(e1.norm_squared(), (1.0f-_p)/(3.0f*_p -2.0f))*e1;
+	return output;
+}
+
+matrix::Vector3f RateControl::phi2(matrix::Vector3f e1){
+	Vector3f output;
+	output = pow(k_a3, 2.0f) * e1
+	+ ((2.0f*k_a3*(2.0f*_p-1.0f))/(3.0f*_p-2.0f))*pow(e1.norm_squared(), (1.0f-_p)/(3.0f*_p -2.0f))*e1
+	+ (_p/(3.0f*_p-2.0f))*pow(e1.norm_squared(), 2*(1.0f-_p)/(3.0f*_p -2.0f))*e1;
+	return output;
 }
