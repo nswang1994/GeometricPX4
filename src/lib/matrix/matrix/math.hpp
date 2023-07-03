@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <assert.h>
 #include "stdlib_imports.hpp"
@@ -7,6 +7,7 @@
 #endif
 #include "helper_functions.hpp"
 #include "Matrix.hpp"
+#include "MatrixSO3.hpp"
 #include "SquareMatrix.hpp"
 #include "Slice.hpp"
 #include "Vector.hpp"

@@ -278,6 +278,17 @@ public:
 		return self.isBlockSymmetric<Width>(first, eps);
 	}
 
+	//HouseHolder
+	template< size_t Width>
+	void HouseHolder(Vector<Type, Width> x, Type p )  {
+		SquareMatrix<Type, Width>& X_(*this);
+		SquareMatrix<Type, Width> I_;
+		Matrix<Type, Width, 1> vectorx = x;
+		I_.setIdentity();
+		X_ = I_ - (2*p/x.norm_squared())*vectorx* vectorx.transpose();
+		return;
+	}
+
 };
 
 using SquareMatrix3f = SquareMatrix<float, 3>;
