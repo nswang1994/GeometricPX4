@@ -15,10 +15,12 @@ Install the PX4 [toolchain](https://docs.px4.io/main/en/dev_setup/dev_env_linux_
 ```
 # Test
 The test can be conducted in the SITL simulation by excuting the following command:
+```
     make px4_sitl gazebo
+```
 # Other information
--The default parameters in the implementation is designed for 3DR-IRIS in Gazebo simulation.
--The flight experiment is conducted based on Holybro X500.
+* The default parameters in the implementation is designed for 3DR-IRIS in Gazebo simulation.
+* The flight experiment is conducted based on Holybro X500.
 TBD
 # Experiment video
 TBD
