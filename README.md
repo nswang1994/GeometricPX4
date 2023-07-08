@@ -6,9 +6,13 @@ TBD
 # Installation
 This installation guide was tested with Ubuntu 20.04
 Clone the repository:
+```
     git clone -b Geometric-FFTS-ESO http://github/nswang1994/GeometricPX4
+```
 Install the PX4 [toolchain](https://docs.px4.io/main/en/dev_setup/dev_env_linux_ubuntu.html):
+```
     bash ./GeometricPX4/Tools/setup/ubuntu.sh
+```
 # Test
 The test can be conducted in the SITL simulation by excuting the following command:
     make px4_sitl gazebo
